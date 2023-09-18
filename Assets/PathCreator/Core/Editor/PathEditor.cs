@@ -61,6 +61,9 @@ namespace PathCreationEditor
 
 		Color handlesStartCol;
 
+        private Quaternion handleRotation = Quaternion.identity;
+        private bool isSceneViewMouseDown;
+        
 		// Constants
 		const int bezierPathTab = 0;
 		const int vertexPathTab = 1;
@@ -134,7 +137,9 @@ namespace PathCreationEditor
 
 					// If a point has been selected
 					if (handleIndexToDisplayAsTransform != -1)
-					{
+                    {
+                        UpdateHandleRotation(handleIndexToDisplayAsTransform);
+                        
 						EditorGUILayout.LabelField("Selected Point:");
 
 						using (new EditorGUI.IndentLevelScope())
@@ -649,14 +654,12 @@ namespace PathCreationEditor
 							bezierPath.SetAnchorNormalAngle(i / 3, anchorAngleHandle.angle - handleRotOffset);
 						}
 					}
-
-				}
+                }
 				else
 				{
-					handlePosition = Handles.DoPositionHandle(handlePosition, Quaternion.identity);
+					handlePosition = Handles.DoPositionHandle(handlePosition, handleRotation);
 				}
-
-			}
+            }
 
 			switch (handleInputType)
 			{
@@ -704,11 +707,32 @@ namespace PathCreationEditor
 			{
 				Undo.RecordObject(creator, "Move point");
 				bezierPath.MovePoint(i, localHandlePosition);
+            }
+        }
 
-			}
+        private void UpdateHandleRotation(int i)
+        {
+            var rot = Quaternion.identity;
+            if (Tools.pivotRotation == PivotRotation.Local)
+            {
+                var i3 = i % 3;
 
-		}
+                var t = creator.path.GetClosestTimeOnPath(bezierPath.GetPoint(i));
+                rot = creator.path.GetRotation(t, bezierPath.IsClosed ? EndOfPathInstruction.Loop : EndOfPathInstruction.Stop);
+                if (i3 != 0)
+                {
+                    var anchorIndex = 0;
+                    if (i3 == 1)
+                        anchorIndex = i - 1;
+                    else if (i3 == 2)
+                        anchorIndex = i + 1;
 
+                    rot = Quaternion.LookRotation(bezierPath.GetPoint(i) - bezierPath.GetPoint(anchorIndex), rot * Vector3.up);
+                }
+            }
+            handleRotation = rot;
+        }
+        
 		#endregion
 
 		#region Internal methods
