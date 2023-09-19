@@ -237,6 +237,12 @@ namespace PathCreationEditor
 					data.showPathBounds = GUILayout.Toggle(data.showPathBounds, new GUIContent("Show Path Bounds"));
 					data.showPerSegmentBounds = GUILayout.Toggle(data.showPerSegmentBounds, new GUIContent("Show Segment Bounds"));
 					data.displayAnchorPoints = GUILayout.Toggle(data.displayAnchorPoints, new GUIContent("Show Anchor Points"));
+                    
+                    if (data.displayAnchorPoints)
+                    {
+                        data.displayAnchorNumbers = GUILayout.Toggle(data.displayAnchorNumbers, new GUIContent("Show Anchor Numbers"));
+                    }
+                    
 					if (!(bezierPath.ControlPointMode == BezierPath.ControlMode.Automatic && globalDisplaySettings.hideAutoControls))
 					{
 						data.displayControlPoints = GUILayout.Toggle(data.displayControlPoints, new GUIContent("Show Control Points"));
@@ -366,8 +372,7 @@ namespace PathCreationEditor
 
 		void DrawVertexPathSceneEditor()
 		{
-
-			Color bezierCol = globalDisplaySettings.bezierPath;
+            Color bezierCol = globalDisplaySettings.bezierPath;
 			bezierCol.a *= .5f;
 
 			if (data.showBezierPathInVertexMode)
@@ -379,6 +384,7 @@ namespace PathCreationEditor
 					{
 						points[j] = MathUtility.TransformPoint(points[j], creator.transform, bezierPath.Space);
 					}
+                    
 					Handles.DrawBezier(points[0], points[3], points[1], points[2], bezierCol, null, 2);
 				}
 			}
@@ -519,8 +525,7 @@ namespace PathCreationEditor
 
 		void DrawBezierPathSceneEditor()
 		{
-
-			bool displayControlPoints = data.displayControlPoints && (bezierPath.ControlPointMode != BezierPath.ControlMode.Automatic || !globalDisplaySettings.hideAutoControls);
+            bool displayControlPoints = data.displayControlPoints && (bezierPath.ControlPointMode != BezierPath.ControlMode.Automatic || !globalDisplaySettings.hideAutoControls);
 			Bounds bounds = bezierPath.CalculateBoundsWithTransform(creator.transform);
 
 			if (Event.current.type == EventType.Repaint)
@@ -661,6 +666,22 @@ namespace PathCreationEditor
 				}
             }
 
+            if (isAnchorPoint && data.displayAnchorNumbers)
+            {
+                var handleNumberText = $"{i / 3 + 1}";
+                
+                GUIStyle handleNumberTextStyle = new GUIStyle
+                {
+                    normal =
+                    {
+                        textColor = globalDisplaySettings.anchorNumberColor
+                    },
+                    fontSize = globalDisplaySettings.anchorNumberSize
+                };
+                
+                Handles.Label(handlePosition, handleNumberText, handleNumberTextStyle);
+            }
+            
 			switch (handleInputType)
 			{
 				case PathHandle.HandleInputType.LMBDrag:
